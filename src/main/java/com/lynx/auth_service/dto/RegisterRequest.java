@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class RegisterRequest {
     @Email(message = "Invalid email")
@@ -19,4 +21,8 @@ public class RegisterRequest {
             message = "Password must contain at least one letter and one number"
     )
     private String password;
+    String username;
+    String firstName;
+    String lastName;
+    LocalDate dateOfBirth;
 }

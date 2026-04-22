@@ -3,6 +3,8 @@ package com.lynx.auth_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter
 @Setter
@@ -19,4 +21,11 @@ public class User {
     private String email;
 
     private String password;
+
+    @Column(unique = true)
+    private String username;
+
+    private String firstName;
+    private String lastName;
+    private LocalDate dateOfBirth;
 }
