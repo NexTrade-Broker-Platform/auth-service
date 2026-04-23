@@ -3,6 +3,7 @@ package com.lynx.auth_service.exception;
 import com.lynx.auth_service.dto.ErrorDetails;
 import com.lynx.auth_service.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
@@ -52,6 +53,19 @@ public class GlobalExceptionHandler {
                         "RESOURCE_EXISTS",
                         ex.getMessage(),
                         ex.getDetails()
+                )
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidFormat() {
+
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "VALIDATION_ERROR",
+                        "The request payload failed validation.",
+                        Map.of("request", "Malformed JSON or invalid field format.")
                 )
         );
     }

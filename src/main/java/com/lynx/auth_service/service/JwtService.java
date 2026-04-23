@@ -3,6 +3,7 @@ package com.lynx.auth_service.service;
 import com.lynx.auth_service.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -12,9 +13,12 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private final Key key = Keys.hmacShaKeyFor(
-            "my-super-secret-key-1234567890123456".getBytes(StandardCharsets.UTF_8)
-    );
+    @Value("${jwt.secret}")
+    private String secret;
+
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateToken(User user) {
         return Jwts.builder()
@@ -23,7 +27,7 @@ public class JwtService {
                 .claim("username", user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) //1 hour
-                .signWith(key)
+                .signWith(getSigningKey())
                 .compact();
     }
 }

@@ -39,7 +39,10 @@ public class AuthService {
             conflictErrors.put("username", "A user with this username already exists.");
         }
 
-        int age = Period.between(request.getDateOfBirth(), LocalDate.now()).getYears();
+        int age = Period.between(
+                request.getDateOfBirth(),
+                LocalDate.now()
+        ).getYears();
 
         if (age < minAge) {
             validationErrors.put("date_of_birth", "User must be at least " + minAge + " years old.");
@@ -59,7 +62,7 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setDateOfBirth(request.getDateOfBirth());
+        user.setDateOfBirth(request.getDateOfBirth().atStartOfDay());
 
         User savedUser = userRepository.save(user);
         return savedUser;
