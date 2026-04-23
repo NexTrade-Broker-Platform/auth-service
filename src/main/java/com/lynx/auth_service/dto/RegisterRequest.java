@@ -1,9 +1,7 @@
 package com.lynx.auth_service.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -15,14 +13,25 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Size(min = 8, message = "Password must be at least 8 characters")
     @Pattern(
             regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
             message = "Password must contain at least one letter and one number"
     )
     private String password;
-    String username;
-    String firstName;
-    String lastName;
-    LocalDate dateOfBirth;
+
+    @NotBlank(message = "Username is required")
+    private String username;
+
+    @NotBlank(message = "First name is required")
+    @JsonProperty("first_name")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @JsonProperty("last_name")
+    private String lastName;
+
+    @NotNull(message = "Date of birth is required")
+    @JsonProperty("date_of_birth")
+    private LocalDate dateOfBirth;
 }

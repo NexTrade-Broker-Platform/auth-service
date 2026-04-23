@@ -1,5 +1,7 @@
 package com.lynx.auth_service.exception;
 
+import com.lynx.auth_service.dto.ErrorDetails;
+import com.lynx.auth_service.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,21 +14,45 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationExceptions(
+    public ErrorResponse handleValidationExceptions(
             MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
+        Map<String, String> details = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
+                details.put(error.getField(), error.getDefaultMessage())
         );
 
-        return errors;
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "VALIDATION_ERROR",
+                        "The request payload failed validation.",
+                        details
+                )
+        );
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(ValidationException ex) {
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "VALIDATION_ERROR",
+                        ex.getMessage(),
+                        ex.getDetails()
+                )
+        );
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleUserExists(UserAlreadyExistsException ex) {
-        return Map.of("error", ex.getMessage());
+    public ErrorResponse handleConflict(ResourceAlreadyExistsException ex) {
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "RESOURCE_EXISTS",
+                        ex.getMessage(),
+                        ex.getDetails()
+                )
+        );
     }
 }

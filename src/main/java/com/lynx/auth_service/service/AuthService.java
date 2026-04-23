@@ -2,11 +2,18 @@ package com.lynx.auth_service.service;
 
 import com.lynx.auth_service.dto.RegisterRequest;
 import com.lynx.auth_service.entity.User;
-import com.lynx.auth_service.exception.UserAlreadyExistsException;
+import com.lynx.auth_service.exception.ResourceAlreadyExistsException;
+import com.lynx.auth_service.exception.ValidationException;
 import com.lynx.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -15,14 +22,35 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void register(RegisterRequest request) {
+    @Value("${app.user.min-age}")
+    private int minAge;
+
+    public User register(RegisterRequest request) {
+
+        Map<String, String> validationErrors = new HashMap<>();
+        Map<String, String> conflictErrors = new HashMap<>();
+
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new UserAlreadyExistsException("User already exists");
+            conflictErrors.put("email", "A user with this email already exists.");
         }
 
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new UserAlreadyExistsException("Username already in use");
+            conflictErrors.put("username", "A user with this username already exists.");
+        }
+
+        int age = Period.between(request.getDateOfBirth(), LocalDate.now()).getYears();
+
+        if (age < minAge) {
+            validationErrors.put("date_of_birth", "User must be at least " + minAge + " years old.");
+        }
+
+        if (!validationErrors.isEmpty()) {
+            throw new ValidationException(validationErrors);
+        }
+
+        if (!conflictErrors.isEmpty()) {
+            throw new ResourceAlreadyExistsException(conflictErrors);
         }
 
         User user = new User();
@@ -33,6 +61,7 @@ public class AuthService {
         user.setLastName(request.getLastName());
         user.setDateOfBirth(request.getDateOfBirth());
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return savedUser;
     }
 }
