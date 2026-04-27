@@ -69,4 +69,16 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(UserNotFoundException ex) {
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "USER_NOT_FOUND",
+                        ex.getMessage(),
+                        Map.of()
+                )
+        );
+    }
 }
