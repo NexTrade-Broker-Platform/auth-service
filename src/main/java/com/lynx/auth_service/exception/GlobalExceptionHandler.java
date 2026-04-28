@@ -81,4 +81,30 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbidden(ForbiddenException ex) {
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "FORBIDDEN",
+                        ex.getMessage(),
+                        Map.of()
+                )
+        );
+    }
+
+    @ExceptionHandler(AuthException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleAuth(AuthException ex) {
+        return new ErrorResponse(
+                new ErrorDetails(
+                        "INVALID_CREDENTIALS",
+                        ex.getMessage(),
+                        Map.of()
+                )
+        );
+    }
+
+
 }

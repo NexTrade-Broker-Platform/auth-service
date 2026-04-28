@@ -1,10 +1,8 @@
 package com.lynx.auth_service.controller;
 
-import com.lynx.auth_service.dto.RegisterRequest;
-import com.lynx.auth_service.dto.RegisterResponse;
-import com.lynx.auth_service.dto.UserResponse;
-import com.lynx.auth_service.dto.UserUpdateRequest;
+import com.lynx.auth_service.dto.*;
 import com.lynx.auth_service.entity.User;
+import com.lynx.auth_service.exception.ForbiddenException;
 import com.lynx.auth_service.service.AuthService;
 import com.lynx.auth_service.service.JwtService;
 import jakarta.validation.Valid;
@@ -62,29 +60,61 @@ public class AuthController {
                 .body(response);
     }
 
+
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+
+        User user = authService.login(request.getEmail(), request.getPassword());
+
+        String token = jwtService.generateToken(user);
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", token)
+                .httpOnly(true)
+                .secure(false) // localhost
+                .path("/")
+                .maxAge(3600)
+                .sameSite("Strict")
+                .build();
+
+        UserResponse userResponse = new UserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getDateOfBirth(),
+                user.getCreatedAt(),
+                user.isActive()
+        );
+
+        LoginResponse response = new LoginResponse(
+                "User logged in successfully",
+                userResponse
+        );
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(response);
+    }
+
+
     @PatchMapping("/{id}")
     public UserResponse updateUser(
             @PathVariable UUID id,
             @Valid @RequestBody UserUpdateRequest request
     ) {
-        /*String currentUserId = (String) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
-        if (!id.toString().equals(currentUserId)) {
-            throw new RuntimeException("Forbidden");
-        }*/ // -> when login will exist, this is a security check
-
+       checkOwnership(id);
         return map(authService.updateUser(id, request));
     }
 
     @GetMapping("/{id}")
     public UserResponse getUser(@PathVariable UUID id) {
+        checkOwnership(id);
         return map(authService.getUser(id));
     }
 
-    @GetMapping
+   @GetMapping
     public List<UserResponse> getAllUsers() {
         return authService.getAllUsers()
                 .stream()
@@ -94,16 +124,7 @@ public class AuthController {
 
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable UUID id) {
-
-        /*String currentUserId = (String) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
-        if (!id.toString().equals(currentUserId)) {
-            throw new RuntimeException("Forbidden");
-        }*/ //when login will exist, this is a security check
-
+        checkOwnership(id);
         authService.deleteUser(id);
     }
 
@@ -118,5 +139,16 @@ public class AuthController {
                 user.getCreatedAt(),
                 user.isActive()
         );
+    }
+
+    private void checkOwnership(UUID id) {
+        String currentUserId = (String) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        if (!id.toString().equals(currentUserId)) {
+            throw new ForbiddenException();
+        }
     }
 }
