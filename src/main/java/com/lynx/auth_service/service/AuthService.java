@@ -3,6 +3,7 @@ package com.lynx.auth_service.service;
 import com.lynx.auth_service.dto.RegisterRequest;
 import com.lynx.auth_service.dto.UserUpdateRequest;
 import com.lynx.auth_service.entity.User;
+import com.lynx.auth_service.exception.AuthException;
 import com.lynx.auth_service.exception.ResourceAlreadyExistsException;
 import com.lynx.auth_service.exception.UserNotFoundException;
 import com.lynx.auth_service.exception.ValidationException;
@@ -70,6 +71,19 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         return savedUser;
+    }
+
+
+    public User login(String email, String password) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AuthException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new AuthException("Invalid email or password");
+        }
+
+        return user;
     }
 
     public User getUser(UUID id) {

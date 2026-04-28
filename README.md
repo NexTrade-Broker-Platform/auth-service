@@ -1,55 +1,97 @@
-AUTH SERVICE DOCUMENTATION
+# AUTH SERVICE
 
-Overview
---------
-This is a simple authentication service built with Spring Boot.
-It provides basic user management (CRUD), validation, and database persistence.
+## Overview
 
-Features
---------
-- User registration
-- Get user by ID
-- Get all users
-- Update user (PATCH)
-- Delete user
-- Input validation (email, password, age)
-- Global error handling
-- PostgreSQL database
-- Docker support
-- Unit tests (Mockito)
-- Integration tests (Testcontainers)
+This is a Spring Boot-based authentication service that provides basic user management and JWT-based authentication.
 
-----------------------------------------
+The service supports full CRUD operations, input validation, secure password handling, and database persistence using PostgreSQL.
 
-SETUP
+---
 
-1. Start database (Docker)
+## Features
+
+* User registration
+* User login (JWT-based authentication)
+* Get user by ID (secured)
+* Update user (secured, ownership enforced)
+* Delete user (secured, ownership enforced)
+* Input validation (email, password, age)
+* Global error handling (standardized responses)
+* Password hashing (BCrypt)
+* JWT authentication using HTTP-only cookies
+* PostgreSQL database (Dockerized)
+* Unit tests (Mockito, JUnit 5)
+* Integration tests (Testcontainers)
+
+---
+
+## Tech Stack
+
+* Java 17+
+* Spring Boot
+* Spring Security
+* JPA / Hibernate
+* PostgreSQL
+* Docker
+* JUnit 5 + Mockito
+* Testcontainers
+
+---
+
+## Setup
+
+### 1. Start Database (Docker)
 
 Run:
+
+```
 docker compose up -d
+```
 
-PostgreSQL will run on:
+Database will be available at:
+
+```
 localhost:5434
+```
 
-----------------------------------------
+---
 
-2. Run application
+### 2. Run Application
 
-From terminal:
+```
 ./gradlew bootRun
+```
 
-Application runs on:
+Application runs at:
+
+```
 http://localhost:8080
+```
 
-----------------------------------------
+---
 
-API ENDPOINTS
+## Authentication
 
-1. REGISTER USER
+The application uses JWT stored in **HTTP-only cookies**.
 
-POST /users/register
+Flow:
 
-Example request:
+1. Register or login
+2. Server returns JWT cookie
+3. Browser automatically sends cookie with each request
+4. JWT filter authenticates the user
+
+---
+
+## API Endpoints
+
+### 1. Register User
+
+**POST /users/register**
+
+Request:
+
+```
 {
   "email": "test@test.com",
   "password": "password1",
@@ -58,97 +100,145 @@ Example request:
   "last_name": "User",
   "date_of_birth": "2000-01-01"
 }
+```
 
-Expected:
-- 201 Created
-- JWT cookie is returned
-- User data (without password)
+Response:
 
-----------------------------------------
+* 201 Created
+* JWT cookie set
+* User data returned
 
-2. GET ALL USERS
+---
 
-GET /users
+### 2. Login
+
+**POST /users/login**
+
+Request:
+
+```
+{
+  "email": "test@test.com",
+  "password": "password1"
+}
+```
+
+Response:
+
+* 200 OK
+* JWT cookie set
+* User data returned
+
+---
+
+### 3. Get User by ID (Protected)
+
+**GET /users/{id}**
+
+Requires authentication.
+
+User can only access their own data.
+
+---
+
+### 4. Update User (Protected)
+
+**PATCH /users/{id}**
 
 Example:
-GET http://localhost:8080/users
 
-----------------------------------------
-
-3. GET USER BY ID
-
-GET /users/{id}
-
-Example:
-GET http://localhost:8080/users/PUT_ID_HERE
-
-----------------------------------------
-
-4. UPDATE USER
-
-PATCH /users/{id}
-
-Example request:
+```
 {
   "username": "newUsername"
 }
+```
 
-Note:
-If authorization is enabled, user can only update their own account.
+Rules:
 
-----------------------------------------
+* Requires authentication
+* User can only update their own account
 
-5. DELETE USER
+---
 
-DELETE /users/{id}
+### 5. Delete User (Protected)
 
-Example:
-DELETE http://localhost:8080/users/PUT_ID_HERE
+**DELETE /users/{id}**
 
-----------------------------------------
+Rules:
 
-ERROR HANDLING
+* Requires authentication
+* User can only delete their own account
 
-The application returns structured error responses.
+---
 
-Example (validation error):
+## Error Handling
+
+All errors return a consistent structure:
+
+```
 {
   "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "The request payload failed validation.",
-    "details": {
-      "email": "Invalid email"
-    }
+    "code": "ERROR_CODE",
+    "message": "Description",
+    "details": {}
   }
 }
+```
 
-----------------------------------------
+### Common Errors
 
-TESTING
+| Status | Code                | Description                  |
+| ------ | ------------------- | ---------------------------- |
+| 400    | VALIDATION_ERROR    | Invalid input                |
+| 401    | INVALID_CREDENTIALS | Wrong login                  |
+| 403    | FORBIDDEN           | Unauthorized access          |
+| 404    | USER_NOT_FOUND      | User does not exist          |
+| 409    | RESOURCE_EXISTS     | Email/username already taken |
+
+---
+
+## Testing
 
 Run all tests:
+
+```
 ./gradlew test
+```
 
-Unit Tests:
-- Service layer
-- Uses Mockito
+### Unit Tests
 
-Integration Tests:
-- Repository layer
-- Uses Testcontainers with real PostgreSQL
+* Service layer
+* Uses Mockito
+* Database is mocked
 
-----------------------------------------
+### Integration Tests
 
-NOTES
+* Repository layer
+* Uses Testcontainers
+* Real PostgreSQL instance
 
-- Passwords are encrypted using BCrypt
-- Password is never returned in API responses
-- Duplicate email or username returns 409 Conflict
-- Minimum age is configurable (default: 18)
+---
 
-----------------------------------------
+## Database
 
-FUTURE IMPROVEMENTS
+PostgreSQL runs in Docker.
 
-- Login endpoint
-- Enforced JWT authentication
+Default config:
+
+* DB: auth_db
+* User: user
+* Password: password
+* Port: 5434
+
+---
+
+## Security Notes
+
+* Passwords are hashed using BCrypt
+* Password is never returned in responses
+* JWT is stored in HTTP-only cookie (not accessible via JS)
+* Token expires after 1 hour
+* Stateless authentication (no sessions)
+
+---
+

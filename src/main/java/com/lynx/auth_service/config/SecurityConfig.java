@@ -21,11 +21,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        //.requestMatchers("/users/register").permitAll() -> after creation of login this should be set
-                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/users/register", "/users/login").permitAll()
                         .anyRequest().authenticated()
-                );
-                //.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); -> this also should be set
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
