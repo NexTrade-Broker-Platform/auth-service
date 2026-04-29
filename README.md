@@ -171,6 +171,44 @@ Rules:
 
 ---
 
+### 6. Get Current User
+
+**GET /users/me**
+
+Returns the currently authenticated user based on the JWT.
+
+Rules:
+
+* Requires authentication
+* No user ID needed
+* Extracts user from JWT
+
+Example:
+
+GET http://localhost:8080/users/me
+
+Response:
+
+* 200 OK → returns current user
+* 401 Unauthorized → if not logged in
+
+### 7. Logout
+
+**POST /users/logout**
+
+Clears the JWT cookie.
+
+Response:
+
+* 200 OK → successfully logged out
+
+After logout:
+
+* JWT cookie is removed
+* Any protected endpoint will return 401 Unauthorized
+
+
+
 ## Error Handling
 
 All errors return a consistent structure:

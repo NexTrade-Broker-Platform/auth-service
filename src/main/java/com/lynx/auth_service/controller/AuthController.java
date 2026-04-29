@@ -2,6 +2,7 @@ package com.lynx.auth_service.controller;
 
 import com.lynx.auth_service.dto.*;
 import com.lynx.auth_service.entity.User;
+import com.lynx.auth_service.exception.AuthException;
 import com.lynx.auth_service.exception.ForbiddenException;
 import com.lynx.auth_service.service.AuthService;
 import com.lynx.auth_service.service.JwtService;
@@ -142,13 +143,50 @@ public class AuthController {
     }
 
     private void checkOwnership(UUID id) {
-        String currentUserId = (String) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null
+                || !auth.isAuthenticated()
+                || "anonymousUser".equals(auth.getPrincipal())) {
+
+            throw new AuthException("Unauthorized");
+        }
+
+        String currentUserId = (String) auth.getPrincipal();
 
         if (!id.toString().equals(currentUserId)) {
             throw new ForbiddenException();
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+
+        ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(false) // localhost
+                .path("/")
+                .maxAge(0) // -> delete cookie
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body("Logged out successfully");
+    }
+
+    @GetMapping("/me")
+    public UserResponse getCurrentUser() {
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()
+                || "anonymousUser".equals(auth.getPrincipal())) {
+            throw new AuthException("Unauthorized");
+        }
+
+        String userId = (String) auth.getPrincipal();
+
+        return map(authService.getUser(UUID.fromString(userId)));
     }
 }
