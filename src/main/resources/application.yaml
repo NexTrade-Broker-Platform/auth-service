@@ -3,14 +3,19 @@ spring:
     name: auth-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5434/auth_db
-    username: user
-    password: password
+    url: jdbc:postgresql://localhost:5433/lynx_auth_db
+    username: auth_user
+    password: auth_password
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
 
 app:
   user:
@@ -18,3 +23,6 @@ app:
 
 jwt:
   secret: mysupersecretkeymysupersecretkeymysupersecretkey123456
+
+server:
+  port: 8081

@@ -67,7 +67,7 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setDateOfBirth(request.getDateOfBirth().atStartOfDay());
+        user.setDateOfBirth(request.getDateOfBirth());
 
         User savedUser = userRepository.save(user);
         return savedUser;
@@ -120,7 +120,7 @@ public class AuthService {
         }
 
         if (request.getDateOfBirth() != null) {
-            user.setDateOfBirth(request.getDateOfBirth().atStartOfDay());
+            user.setDateOfBirth(request.getDateOfBirth());
         }
 
         if (request.getActive() != null) {
