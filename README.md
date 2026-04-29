@@ -70,6 +70,30 @@ http://localhost:8080
 
 ---
 
+### Cookie Security
+
+In development (localhost), the JWT cookie is configured with:
+
+- secure = false
+
+This allows the cookie to be sent over HTTP.
+
+In production, this must be changed to:
+
+- secure = true
+
+This ensures the cookie is only sent over HTTPS, improving security.
+
+Example:
+
+ResponseCookie.from("jwt", token)
+    .httpOnly(true)
+    .secure(true) // MUST be true in production
+    .path("/")
+    .maxAge(3600)
+    .sameSite("Strict")
+    .build();
+
 ## Authentication
 
 The application uses JWT stored in **HTTP-only cookies**.
