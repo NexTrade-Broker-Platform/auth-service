@@ -48,7 +48,8 @@ public class AuthController {
                 user.getLastName(),
                 user.getDateOfBirth(),
                 user.getCreatedAt(),
-                user.isActive()
+                user.isActive(),
+                user.isAdmin()
         );
 
         RegisterResponse response = new RegisterResponse(
@@ -86,7 +87,8 @@ public class AuthController {
                 user.getLastName(),
                 user.getDateOfBirth(),
                 user.getCreatedAt(),
-                user.isActive()
+                user.isActive(),
+                user.isAdmin()
         );
 
         LoginResponse response = new LoginResponse(
@@ -138,7 +140,8 @@ public class AuthController {
                 user.getLastName(),
                 user.getDateOfBirth(),
                 user.getCreatedAt(),
-                user.isActive()
+                user.isActive(),
+                user.isAdmin()
         );
     }
 

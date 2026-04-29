@@ -3,6 +3,7 @@ package com.lynx.auth_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -34,7 +35,7 @@ public class User {
     private String lastName;
 
     @Column(name = "date_of_birth", nullable = false)
-    private LocalDateTime dateOfBirth;
+    private LocalDate dateOfBirth;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
