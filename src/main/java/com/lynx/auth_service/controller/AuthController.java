@@ -13,8 +13,11 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -56,6 +59,21 @@ public class AuthController {
                 "User registered successfully",
                 userResponse
         );
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        Map<String, Object> walletRequest = new HashMap<>();
+        walletRequest.put("userId", user.getId());
+
+        try {
+            restTemplate.postForEntity(
+                    "http://localhost:8081/funds/create-wallet",
+                    walletRequest,
+                    Void.class
+            );
+        } catch (Exception ex) {
+            throw new RuntimeException("User registered, but wallet creation failed", ex);
+        }
 
         return ResponseEntity.status(201)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
