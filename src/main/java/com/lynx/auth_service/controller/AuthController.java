@@ -65,7 +65,6 @@ public class AuthController {
 
             Map<String, Object> walletRequest = new HashMap<>();
             walletRequest.put("userId", user.getId());
-            walletRequest.put("email", user.getEmail());
             restTemplate.postForEntity(
                     "http://localhost:8081/funds/create-wallet",
                     walletRequest,
