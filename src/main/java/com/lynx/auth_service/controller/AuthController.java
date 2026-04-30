@@ -60,19 +60,19 @@ public class AuthController {
                 userResponse
         );
 
-        RestTemplate restTemplate = new RestTemplate();
-
-        Map<String, Object> walletRequest = new HashMap<>();
-        walletRequest.put("userId", user.getId());
-
         try {
+            RestTemplate restTemplate = new RestTemplate();
+
+            Map<String, Object> walletRequest = new HashMap<>();
+            walletRequest.put("userId", user.getId());
+            walletRequest.put("email", user.getEmail());
             restTemplate.postForEntity(
                     "http://localhost:8081/funds/create-wallet",
                     walletRequest,
                     Void.class
             );
         } catch (Exception ex) {
-            throw new RuntimeException("User registered, but wallet creation failed", ex);
+            System.out.println("User registered, but wallet creation failed");
         }
 
         return ResponseEntity.status(201)
