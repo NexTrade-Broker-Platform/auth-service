@@ -26,3 +26,6 @@ jwt:
 
 server:
   port: 8081
+
+internal:
+  api-key: secret123

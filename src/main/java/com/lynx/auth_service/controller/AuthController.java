@@ -8,17 +8,17 @@ import com.lynx.auth_service.service.AuthService;
 import com.lynx.auth_service.service.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/users")
@@ -28,8 +28,21 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
 
+    @Value("${internal.api-key}")
+    private String internalApiKey;
+
+    private void validateKey(String key){
+        if (!Objects.equals(internalApiKey, key)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid secret API key");
+        }
+    }
+
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(
+            @RequestHeader("X-INTERNAL-KEY") String key,
+            @Valid @RequestBody RegisterRequest request) {
+        validateKey(key);
+
         User user = authService.register(request);
 
         String token = jwtService.generateToken(user);
@@ -82,8 +95,10 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-
+    public ResponseEntity<?> login(
+            @RequestHeader("X-INTERNAL-KEY") String key,
+            @Valid @RequestBody LoginRequest request) {
+        validateKey(key);
         User user = authService.login(request.getEmail(), request.getPassword());
 
         String token = jwtService.generateToken(user);
@@ -121,21 +136,27 @@ public class AuthController {
 
     @PatchMapping("/{id}")
     public UserResponse updateUser(
+            @RequestHeader("X-INTERNAL-KEY") String key,
             @PathVariable UUID id,
             @Valid @RequestBody UserUpdateRequest request
     ) {
-       checkOwnership(id);
+        validateKey(key);
+        checkOwnership(id);
         return map(authService.updateUser(id, request));
     }
 
     @GetMapping("/{id}")
-    public UserResponse getUser(@PathVariable UUID id) {
+    public UserResponse getUser(
+            @RequestHeader("X-INTERNAL-KEY") String key,
+            @PathVariable UUID id) {
+        validateKey(key);
         checkOwnership(id);
         return map(authService.getUser(id));
     }
 
    @GetMapping
-    public List<UserResponse> getAllUsers() {
+    public List<UserResponse> getAllUsers(@RequestHeader("X-INTERNAL-KEY") String key) {
+        validateKey(key);
         return authService.getAllUsers()
                 .stream()
                 .map(this::map)
@@ -143,7 +164,10 @@ public class AuthController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable UUID id) {
+    public void deleteUser(
+            @RequestHeader("X-INTERNAL-KEY") String key,
+            @PathVariable UUID id) {
+        validateKey(key);
         checkOwnership(id);
         authService.deleteUser(id);
     }
@@ -181,8 +205,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
-
+    public ResponseEntity<?> logout(@RequestHeader("X-INTERNAL-KEY") String key) {
+        validateKey(key);
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
                 .secure(false) // localhost
@@ -196,8 +220,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public UserResponse getCurrentUser() {
-
+    public UserResponse getCurrentUser(@RequestHeader("X-INTERNAL-KEY") String key) {
+        validateKey(key);
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()
