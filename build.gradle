@@ -44,6 +44,8 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-flyway'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'com.bucket4j:bucket4j-core:8.10.1'
+
 }
 
 tasks.named('test') {

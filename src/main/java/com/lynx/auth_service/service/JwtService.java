@@ -1,6 +1,7 @@
 package com.lynx.auth_service.service;
 
 import com.lynx.auth_service.entity.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,9 @@ import java.util.Date;
 
 @Service
 public class JwtService {
+
+    @Value("${jwt.expiration-ms}")
+    private long expirationMs;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -26,17 +30,14 @@ public class JwtService {
                 .claim("email", user.getEmail())
                 .claim("username", user.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) //1 hour
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs)) //1 hour
                 .signWith(getSigningKey())
                 .compact();
     }
 
     public boolean isValid(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
+            parseToken(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -44,11 +45,14 @@ public class JwtService {
     }
 
     public String extractUserId(String token) {
+        return parseToken(token).getSubject();
+    }
+
+    private Claims parseToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
     }
 }

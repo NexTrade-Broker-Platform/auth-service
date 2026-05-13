@@ -60,7 +60,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         return path.equals("/users/register")
-                || path.equals("/users/login")
-                || path.equals("/users/logout");
+                || path.equals("/users/login");
     }
 }

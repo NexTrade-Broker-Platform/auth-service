@@ -29,6 +29,4 @@ public class UserUpdateRequest {
 
     @JsonProperty("date_of_birth")
     private LocalDate dateOfBirth;
-
-    private Boolean active;
 }
