@@ -304,3 +304,18 @@ Default config:
 
 ---
 
+An internal static security review was performed covering:
+- authentication
+- authorization
+- secret management
+- Docker exposure
+- JWT handling
+- rate limiting
+- financial transaction integrity
+
+Several critical findings were remediated, including:
+- removal of hardcoded secrets
+- brute-force protection
+- secure JWT cookie configuration
+- environment-based secret management
+

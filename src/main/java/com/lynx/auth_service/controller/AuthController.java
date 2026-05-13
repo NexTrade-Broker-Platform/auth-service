@@ -8,11 +8,10 @@ import com.lynx.auth_service.service.AuthService;
 import com.lynx.auth_service.service.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -25,8 +24,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(AuthController.class);
+
     private final AuthService authService;
     private final JwtService jwtService;
+
+    @Value("${app.cookie.secure:true}")
+    private boolean cookieSecure;
 
     @Value("${internal.api-key}")
     private String internalApiKey;
@@ -49,8 +54,7 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
-                //.secure(true)
-                .secure(false) // this is false to work on localhost, but in prod it should be set to true
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(3600) // 1 hour
                 .sameSite("Strict")
@@ -78,13 +82,19 @@ public class AuthController {
 
             Map<String, Object> walletRequest = new HashMap<>();
             walletRequest.put("userId", user.getId());
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-INTERNAL-KEY", internalApiKey);
+
+            HttpEntity<Map<String, Object>> entity =
+                    new HttpEntity<>(walletRequest, headers);
+
             restTemplate.postForEntity(
                     "http://wallet-service:8082/funds/create-wallet",
-                    walletRequest,
+                    entity,
                     Void.class
             );
         } catch (Exception ex) {
-            System.out.println("User registered, but wallet creation failed");
+            log.error("Wallet creation failed for user {}", user.getId(), ex);
         }
 
         return ResponseEntity.status(201)
@@ -105,7 +115,7 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
-                .secure(false) // localhost
+                .secure(cookieSecure) // localhost
                 .path("/")
                 .maxAge(3600)
                 .sameSite("Strict")
@@ -154,14 +164,6 @@ public class AuthController {
         return map(authService.getUser(id));
     }
 
-   @GetMapping
-    public List<UserResponse> getAllUsers(@RequestHeader("X-INTERNAL-KEY") String key) {
-        validateKey(key);
-        return authService.getAllUsers()
-                .stream()
-                .map(this::map)
-                .toList();
-    }
 
     @DeleteMapping("/{id}")
     public void deleteUser(
@@ -209,7 +211,7 @@ public class AuthController {
         validateKey(key);
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false) // localhost
+                .secure(cookieSecure) // localhost
                 .path("/")
                 .maxAge(0) // -> delete cookie
                 .build();

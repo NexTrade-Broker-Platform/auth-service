@@ -79,6 +79,10 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthException("Invalid email or password"));
 
+        if (!user.isActive()) {
+            throw new AuthException("Account disabled");
+        }
+
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new AuthException("Invalid email or password");
         }
@@ -89,11 +93,6 @@ public class AuthService {
     public User getUser(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(UserNotFoundException::new);
-    }
-
-    // READ ALL
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
     }
 
     public User updateUser(UUID id, UserUpdateRequest request) {
@@ -121,10 +120,6 @@ public class AuthService {
 
         if (request.getDateOfBirth() != null) {
             user.setDateOfBirth(request.getDateOfBirth());
-        }
-
-        if (request.getActive() != null) {
-            user.setActive(request.getActive());
         }
 
         return userRepository.save(user);
