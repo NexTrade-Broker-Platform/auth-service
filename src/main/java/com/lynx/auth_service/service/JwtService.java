@@ -1,10 +1,12 @@
 package com.lynx.auth_service.service;
 
+import com.lynx.auth_service.config.JwtProperties;
 import com.lynx.auth_service.entity.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -14,24 +16,30 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt.expiration-ms}")
-    private long expirationMs;
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.secret}")
-    private String secret;
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
-    private Key getSigningKey() {
+    private Key keyForId(String kid) {
+        String secret = jwtProperties.getKeys().get(kid);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException("Unknown or unconfigured JWT key id: " + kid);
+        }
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(User user) {
+        String kid = jwtProperties.getCurrentKeyId();
         return Jwts.builder()
+                .setHeaderParam("kid", kid)
                 .setSubject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("username", user.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs)) //1 hour
-                .signWith(getSigningKey())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs()))
+                .signWith(keyForId(kid))
                 .compact();
     }
 
@@ -50,7 +58,14 @@ public class JwtService {
 
     private Claims parseToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKeyResolver(new SigningKeyResolverAdapter() {
+                    @Override
+                    public Key resolveSigningKey(JwsHeader header, Claims claims) {
+                        String kid = header.getKeyId();
+                        // Fall back to the current key for tokens issued before rotation was introduced
+                        return keyForId(kid != null ? kid : jwtProperties.getCurrentKeyId());
+                    }
+                })
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
