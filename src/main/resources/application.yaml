@@ -30,7 +30,7 @@ jwt:
     v1: ${JWT_SECRET}
 
 server:
-  port: 8087
+  port: 9001
 
 internal:
   api-key: ${INTERNAL_API_KEY}
