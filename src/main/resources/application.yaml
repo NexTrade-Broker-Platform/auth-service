@@ -28,7 +28,7 @@ jwt:
   expiration-ms: ${JWT_EXPIRATION_MS:3600000}
 
 server:
-  port: 8081
+  port: 9001
 
 internal:
   api-key: ${INTERNAL_API_KEY}
