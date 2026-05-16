@@ -36,6 +36,9 @@ public class AuthController {
     @Value("${internal.api-key}")
     private String internalApiKey;
 
+    @Value("${services.wallet.url:http://wallet-service:9002}")
+    private String walletServiceUrl;
+
     private void validateKey(String key){
         if (!Objects.equals(internalApiKey, key)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid secret API key");
@@ -89,7 +92,7 @@ public class AuthController {
                     new HttpEntity<>(walletRequest, headers);
 
             restTemplate.postForEntity(
-                    "http://wallet-service:8082/funds/create-wallet",
+                    walletServiceUrl + "/funds/create-wallet",
                     entity,
                     Void.class
             );
